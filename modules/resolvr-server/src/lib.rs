@@ -24,6 +24,7 @@ use fedimint_core::{apply, async_trait_maybe_send, Amount, OutPoint, PeerId, Ser
 use fedimint_server::check_auth;
 use fedimint_server::config::distributedgen::PeerHandleOps;
 use futures::StreamExt;
+use nostr_sdk::secp256k1;
 use rand::rngs::OsRng;
 use resolvr_common::config::{
     ResolvrClientConfig, ResolvrConfig, ResolvrConfigConsensus, ResolvrConfigLocal,
@@ -275,8 +276,8 @@ impl ServerModule for Resolvr {
         if let Some(message) = dbtx.get_value(&UnsignedEventRequest).await {
             let frost_key = self.cfg.consensus.frost_key.clone();
             let xonly_frost_key = frost_key.into_xonly_key();
-
-            let message_raw = Message::plain("resolvr", message.0.as_json().as_bytes());
+            let json = message.0.as_json();
+            let message_raw = Message::plain("resolvr", json.as_bytes());
             let nonces = Resolvr::get_nonces(dbtx, message.clone()).await;
             let session_nonces = nonces
                 .clone()
@@ -373,7 +374,8 @@ impl ServerModule for Resolvr {
                 let my_peer_id = self.cfg.private.my_peer_id;
                 info!("Process SigShare Consensus Item. Message: {msg:?} Nonce: {share:?} PeerId: {peer_id} MyPeerId: {my_peer_id}");
                 let xonly_frost_key = self.cfg.consensus.frost_key.clone().into_xonly_key();
-                let message = Message::plain("resolvr", msg.0.as_json().as_bytes());
+                let json = msg.0.as_json();
+                let message = Message::plain("resolvr", json.as_bytes());
                 let nonces = Resolvr::get_nonces(dbtx, msg.clone()).await;
                 let session_nonces = nonces
                     .clone()
@@ -433,6 +435,10 @@ impl ServerModule for Resolvr {
                         &combined_sig,
                     );
                     tracing::info!("Signature Verification Outcome: {verification_outcome}");
+                    let signature = combined_sig.to_string().into_bytes();
+                    let signature = secp256k1::schnorr::Signature::from_slice(&signature).unwrap();
+                    let signed_event = msg.0.add_signature(signature).expect("adding signature to event");
+                    tracing::info!("Signed event be like: {signed_event:?}");
                     // TODO: Write to database as OutputOutcome
                 }
             }
@@ -493,7 +499,7 @@ impl ServerModule for Resolvr {
                 dbtx.insert_new_entry(&UnsignedEventRequest, &message).await;
                 Ok(())
             }
-        }]x
+        }]
     }
 }
 
