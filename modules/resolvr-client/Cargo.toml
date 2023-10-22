@@ -11,3 +11,4 @@ fedimint-client = { path = "../../fedimint-client" }
 erased-serde = "0.3"
 resolvr-common ={ path = "../resolvr-common" }
 serde = { version = "1.0.149", features = [ "derive" ] }
+nostr-sdk = { workplace = true }

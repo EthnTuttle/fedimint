@@ -24,6 +24,7 @@ use fedimint_ln_common::contracts::ContractId;
 use fedimint_mint_client::{MintClientExt, MintClientModule, OOBNotes};
 use fedimint_wallet_client::{WalletClientExt, WalletClientModule, WithdrawState};
 use futures::StreamExt;
+use nostr_sdk::FromBech32;
 use resolvr_client::ResolvrClientExt;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
@@ -137,9 +138,10 @@ pub enum ClientCmd {
     },
     /// Returns the client config
     Config,
-    SignMessage {
+    NostrNote {
         #[clap(long)]
         msg: String,
+        pub_key: String
     },
 }
 
@@ -480,8 +482,10 @@ pub async fn handle_command(
             let config = client.get_config_json();
             Ok(serde_json::to_value(config).expect("Client config is serializable"))
         }
-        ClientCmd::SignMessage { msg } => {
-            client.request_sign_message(msg).await?;
+        ClientCmd::NostrNote { msg, pub_key  } => {
+            let pub_key = nostr_sdk::key::XOnlyPublicKey::from_bech32(pub_key).expect("invalid npub provided");
+            let ndk_unsigned_event = nostr_sdk::EventBuilder::new_text_note(msg, &[]).to_unsigned_event(pub_key);
+            client.request_sign_message(ndk_unsigned_event).await?;
             Ok(json!("Done"))
         }
     }

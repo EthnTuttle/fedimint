@@ -1,6 +1,6 @@
 use fedimint_core::encoding::{Decodable, Encodable};
 use fedimint_core::{impl_db_lookup, impl_db_record, PeerId};
-use resolvr_common::{ResolvrNonceKeyPair, ResolvrSignatureShare};
+use resolvr_common::{ResolvrNonceKeyPair, ResolvrSignatureShare, UnsignedEvent};
 use serde::Serialize;
 
 #[repr(u8)]
@@ -13,10 +13,10 @@ pub enum DbKeyPrefix {
 }
 
 #[derive(Debug, Clone, Encodable, Decodable, Eq, PartialEq, Hash, Serialize)]
-pub struct ResolvrNonceKey(pub String, pub PeerId);
+pub struct ResolvrNonceKey(pub UnsignedEvent, pub PeerId);
 
 #[derive(Debug, Clone, Encodable, Decodable, Eq, PartialEq, Hash, Serialize)]
-pub struct ResolvrNonceKeyMessagePrefix(pub String);
+pub struct ResolvrNonceKeyMessagePrefix(pub UnsignedEvent);
 
 #[derive(Debug, Clone, Encodable, Decodable, Eq, PartialEq, Hash, Serialize)]
 pub struct ResolvrNonceKeyPrefix;
@@ -34,7 +34,7 @@ impl_db_lookup!(
 );
 
 #[derive(Debug, Clone, Encodable, Decodable, Eq, PartialEq, Hash, Serialize)]
-pub struct ResolvrSignatureShareKey(pub String, pub PeerId);
+pub struct ResolvrSignatureShareKey(pub UnsignedEvent, pub PeerId);
 
 impl_db_record!(
     key = ResolvrSignatureShareKey,
@@ -45,21 +45,24 @@ impl_db_record!(
 impl_db_lookup!(
     key = ResolvrSignatureShareKey,
     query_prefix = ResolvrSignatureShareKeyPrefix,
-    query_prefix = ResolvrSignatureShareKeyMessagePrefix
+    query_prefix = ResolvrSignatureShareKeyUnsignedEventPrefix
 );
 
 #[derive(Debug, Clone, Encodable, Decodable, Eq, PartialEq, Hash, Serialize)]
-pub struct ResolvrSignatureShareKeyMessagePrefix(pub String);
+pub struct ResolvrSignatureShareKeyUnsignedEventPrefix(pub UnsignedEvent);
 
 #[derive(Debug, Clone, Encodable, Decodable, Eq, PartialEq, Hash, Serialize)]
 pub struct ResolvrSignatureShareKeyPrefix;
+
+#[derive(Debug, Clone, Eq, Encodable, Decodable, PartialEq, Hash, Serialize)]
+pub struct UnsignedEventRequest;
 
 #[derive(Debug, Clone, Encodable, Decodable, Eq, PartialEq, Hash, Serialize)]
 pub struct MessageNonceRequest;
 
 impl_db_record!(
     key = MessageNonceRequest,
-    value = String,
+    value = UnsignedEvent,
     db_prefix = DbKeyPrefix::MessageNonceRequest
 );
 
@@ -67,7 +70,7 @@ impl_db_record!(
 pub struct MessageSignRequest;
 
 impl_db_record!(
-    key = MessageSignRequest,
-    value = String,
+    key = UnsignedEventRequest,
+    value = UnsignedEvent,
     db_prefix = DbKeyPrefix::MessageSignRequest
 );

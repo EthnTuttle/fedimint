@@ -45,6 +45,7 @@ tracing-subscriber = { version = "0.3.16", features = [ "env-filter" ] }
 serde_json = { version = "1.0.91", features = ["preserve_order"] }
 url = { version = "2.3.1", features = ["serde"] }
 clap_complete = "4.3.1"
+nostr-sdk = { workplace = true }
 
 [build-dependencies]
 fedimint-build = { path = "../fedimint-build" }

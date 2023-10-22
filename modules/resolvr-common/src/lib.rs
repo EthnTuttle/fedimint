@@ -11,6 +11,7 @@ use schnorr_fun::fun::marker::{Public, Zero};
 use schnorr_fun::fun::Scalar;
 use schnorr_fun::musig::NonceKeyPair;
 use serde::{Deserialize, Serialize};
+use nostr_sdk::UnsignedEvent as NdkUnsignedEvent;
 
 pub mod api;
 pub mod config;
@@ -23,8 +24,8 @@ pub const CONSENSUS_VERSION: ModuleConsensusVersion = ModuleConsensusVersion(0);
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash, Serialize, Deserialize, Encodable, Decodable)]
 pub enum ResolvrConsensusItem {
-    Nonce(String, ResolvrNonceKeyPair),
-    FrostSigShare(String, ResolvrSignatureShare),
+    Nonce(UnsignedEvent, ResolvrNonceKeyPair),
+    FrostSigShare(UnsignedEvent, ResolvrSignatureShare),
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash, Serialize, Deserialize, Encodable, Decodable)]
@@ -155,5 +156,26 @@ impl Decodable for ResolvrSignatureShare {
                 "Failed to create ResolvrSignatureShare from bytes",
             )),
         }
+    }
+}
+
+#[derive(Debug, Clone, Eq, PartialEq, Hash, Serialize, Deserialize)]
+pub struct UnsignedEvent(pub NdkUnsignedEvent);
+
+impl Encodable for UnsignedEvent {
+    fn consensus_encode<W: std::io::Write>(&self, writer: &mut W) -> Result<usize, std::io::Error> {
+        self.0.as_json().as_bytes().consensus_encode(writer)
+    }
+}
+
+impl Decodable for UnsignedEvent {
+    fn consensus_decode<R: std::io::Read>(
+        r: &mut R,
+        modules: &fedimint_core::module::registry::ModuleDecoderRegistry,
+    ) -> Result<Self, fedimint_core::encoding::DecodeError> {
+        let bytes = Vec::<u8>::consensus_decode(r, modules)?;
+        let json = String::from_utf8(bytes).unwrap();
+        let event = nostr_sdk::UnsignedEvent::from_json(json).unwrap();
+        Ok(UnsignedEvent(event))
     }
 }

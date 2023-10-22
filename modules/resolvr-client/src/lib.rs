@@ -11,18 +11,19 @@ use fedimint_core::module::{
 };
 use fedimint_core::{apply, async_trait_maybe_send};
 use resolvr_common::api::ResolvrFederationApi;
-use resolvr_common::{ResolvrCommonGen, ResolvrModuleTypes, KIND};
+use resolvr_common::{ResolvrCommonGen, ResolvrModuleTypes, KIND, UnsignedEvent};
+use nostr_sdk::UnsignedEvent as NdkUnsignedEvent;
 
 #[apply(async_trait_maybe_send)]
 pub trait ResolvrClientExt {
-    async fn request_sign_message(&self, msg: String) -> anyhow::Result<()>;
+    async fn request_sign_message(&self, msg: NdkUnsignedEvent) -> anyhow::Result<()>;
 }
 
 #[apply(async_trait_maybe_send)]
 impl ResolvrClientExt for Client {
-    async fn request_sign_message(&self, msg: String) -> anyhow::Result<()> {
+    async fn request_sign_message(&self, msg: NdkUnsignedEvent) -> anyhow::Result<()> {
         let (resolvr, _instance) = self.get_first_module::<ResolvrClientModule>(&KIND);
-        resolvr.module_api.request_sign_message(msg).await?;
+        resolvr.module_api.request_sign_message(UnsignedEvent(msg)).await?;
         Ok(())
     }
 }
