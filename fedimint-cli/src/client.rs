@@ -483,6 +483,7 @@ pub async fn handle_command(
             Ok(serde_json::to_value(config).expect("Client config is serializable"))
         }
         ClientCmd::NostrNote { msg, pub_key  } => {
+            // TODO: check string to be hex or bech32
             let pub_key = nostr_sdk::key::XOnlyPublicKey::from_bech32(pub_key).expect("invalid npub provided");
             let ndk_unsigned_event = nostr_sdk::EventBuilder::new_text_note(msg, &[]).to_unsigned_event(pub_key);
             client.request_sign_message(ndk_unsigned_event).await?;

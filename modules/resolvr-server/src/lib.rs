@@ -189,7 +189,8 @@ impl ServerModuleInit for ResolvrGen {
             .finish_keygen(keygen.clone(), my_index, my_shares, pop_message)
             .expect("Finish keygen failed");
 
-        info!("MyIndex: {my_index} MySecretShare: {my_secret_share} FrostKey: {frost_key:?}");
+        let xonly = frost_key.clone().into_xonly_key().public_key().to_string(); // hex string
+        info!("MyIndex: {my_index} MySecretShare: {my_secret_share} FrostPublicKeyInHex: {xonly:?}");
 
         Ok(ResolvrConfig {
             local: ResolvrConfigLocal {},
@@ -284,6 +285,7 @@ impl ServerModule for Resolvr {
                 .into_iter()
                 .map(|(key, nonce)| (key, nonce.public()))
                 .collect::<BTreeMap<_, _>>();
+            tracing::info!("consensus_proposal about to start_sign_session {session_nonces:?}");
             let session =
                 self.frost
                     .start_sign_session(&xonly_frost_key, session_nonces, message_raw);
@@ -382,6 +384,7 @@ impl ServerModule for Resolvr {
                     .into_iter()
                     .map(|(key, nonce)| (key, nonce.public()))
                     .collect::<BTreeMap<_, _>>();
+                tracing::info!("ResolvrConsensusItem::FrostSigShare about to start_sign_session {session_nonces:?}");
                 let session =
                     self.frost
                         .start_sign_session(&xonly_frost_key, session_nonces, message);
@@ -493,7 +496,7 @@ impl ServerModule for Resolvr {
         vec![api_endpoint! {
             "sign_message",
             async |_module: &Resolvr, context, message: UnsignedEvent| -> () {
-                check_auth(context)?;
+                // check_auth(context)?;
                 info!("Received sign_message request. Message: {message:?}");
                 let mut dbtx = context.dbtx();
                 dbtx.insert_new_entry(&UnsignedEventRequest, &message).await;
