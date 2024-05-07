@@ -184,7 +184,7 @@ impl fmt::Display for CliError {
 
 #[derive(Parser, Clone)]
 #[command(version)]
-struct Opts {
+pub struct Opts {
     /// The working directory of the client containing the config and db
     #[arg(long = "data-dir", env = FM_CLIENT_DIR_ENV)]
     data_dir: Option<PathBuf>,
@@ -663,7 +663,7 @@ impl FedimintCli {
             .map_err_cli()
     }
 
-    async fn handle_command(&mut self, cli: Opts) -> CliOutputResult {
+    pub async fn handle_command(&mut self, cli: Opts) -> CliOutputResult {
         match cli.command.clone() {
             Command::InviteCode { peer } => {
                 let db = cli.load_rocks_db().await?;
